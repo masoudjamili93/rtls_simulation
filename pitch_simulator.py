@@ -10,33 +10,32 @@ class PitchSimulator:
     PITCH_LENGTH = 40.0
     PITCH_WIDTH = 24.0
     NUMBER_OF_PLAYERS = 10
-    __context = zmq.Context()
-    __socket = __context.socket(zmq.REP)
-    __game_time = 100
-    __points = []
-    __annotations = []
-    __position_history = []
 
     def __init__(self, game_time):
         self.__ani = None
         self.__game_time = game_time
+        self.__fig,self.__ax = plt.subplots()
+        self.__context = zmq.Context()
+        self.__socket = self.__context.socket(zmq.REP)
+        self.__game_time = 100
+        self.__points = []
+        self.__annotations = []
+        self.__position_history = []
         self.__socket.bind("tcp://*:5555")
         #  Socket to talk to server
         print("Connecting to rtls server…")
         self.simulate()
 
     def simulate(self):
-        fig, ax = plt.subplots()
         # set the axes limits - Futsal pitch size
-        ax.axis([-self.PITCH_LENGTH/2, self.PITCH_LENGTH/2, -self.PITCH_WIDTH/2, self.PITCH_WIDTH/2])
+        self.__ax.axis([-self.PITCH_LENGTH/2, self.PITCH_LENGTH/2, -self.PITCH_WIDTH/2, self.PITCH_WIDTH/2])
         for n in range (1,11):
             color='green' if n<6 else 'blue'
-            newP, = ax.plot(0,n,marker="o",color=color)
-            newAn = ax.annotate(str(n), xy=(0,n))
+            newP, = self.__ax.plot(0,n,marker="o",color=color)
             self.__points.append(newP)
-            self.__annotations.append(newAn)
-        self.__ani = FuncAnimation(fig, self.update_pitch)
-        fig.set_size_inches(10, 6)
+            self.__annotations.append(self.__ax.annotate(str(n), xy=(0,n)))
+        self.__ani = FuncAnimation(self.__fig, self.update_pitch, save_count=10)
+        self.__fig.set_size_inches(10, 6)
         plt.show()
 
     # Updating players position from server on the pitch, to be repeatedly called by the animation
@@ -45,8 +44,7 @@ class PitchSimulator:
         if message == b'Finish':
             self.__socket.close()
             self.__ani.event_source.stop()
-            plt.close('all')
-            return
+            return self.__points[0], self.__annotations[0]
         position_message = rt.Position()
         position_message.ParseFromString(message)
         id = position_message.sensorId
