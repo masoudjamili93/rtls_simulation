@@ -1,8 +1,6 @@
 import json
 import math
 import time
-
-import self as self
 import zmq
 import random
 import rtls_pb2 as pb
@@ -51,7 +49,7 @@ class RtlsSimulator:
         output = pb.Data3d()
         output.x = vel_x
         output.y = vel_y
-        output.z = vel_z
+        output.z = vel_z/100 # M to CM
         return output
 
     def send_position_update(self):
