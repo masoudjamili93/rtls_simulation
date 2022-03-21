@@ -6,7 +6,6 @@ import random
 import rtls_pb2 as pb
 
 class RtlsSimulator:
-
     # pitch size; a common Futsal 40m * 24m pitch
     PITCH_MAX_X = 20.0
     PITCH_MIN_X = -20.0
@@ -39,17 +38,17 @@ class RtlsSimulator:
         self.send_position_update()
 
     def get_random_velocity(self):
-        vel_length = random.randint(20, 400)*self.UPDATE_SPEED    #random length in cm
-        vel_degree = random.randint(0, 360)*self.UPDATE_SPEED     #random movement degree
+        vel_length = random.randint(20, 400)*self.UPDATE_SPEED    # random length in cm
+        vel_degree = random.randint(0, 360)*self.UPDATE_SPEED     # random movement degree
         # random Z parameter in cm - 10% possibility of jumping
-        vel_z = random.randint(1,100) if random.randint(1,10)==2 else 0
-        #calculate x,y from polar velocity
+        vel_z = random.randint(1, 100) if random.randint(1, 10) == 2 else 0
+        # calculate x,y from polar velocity
         vel_x = vel_length * math.cos(math.radians(vel_degree))/100
         vel_y = vel_length * math.sin(math.radians(vel_degree))/100
         output = pb.Data3d()
         output.x = vel_x
         output.y = vel_y
-        output.z = vel_z/100 # M to CM
+        output.z = vel_z/100    # M to CM
         return output
 
     def send_position_update(self):
@@ -57,8 +56,8 @@ class RtlsSimulator:
         socket = context.socket(zmq.REQ)
         socket.connect("tcp://localhost:5555")
         for usec in range(self.game_time):
-            time.sleep(self.UPDATE_SPEED)           #  position update in Hz
-            for n in range (0,self.NUMBER_OF_PLAYERS):
+            time.sleep(self.UPDATE_SPEED)           # position update in Hz
+            for n in range(0, self.NUMBER_OF_PLAYERS):
                 random_movement = self.get_random_velocity()
                 # check that players not leaving the pitch
                 x = self.__players_position[n].x + random_movement.x
@@ -83,9 +82,9 @@ class RtlsSimulator:
                 message.position.z = self.__players_position[n].z
                 # for unit test
                 self.__position_history.append(
-                    {"id": n+1, "usec": usec, "x": round(x,4), "y": round(y,4), "z": round(message.position.z,4)})
+                    {"id": n+1, "usec": usec, "x": round(x, 4), "y": round(y, 4), "z": round(message.position.z, 4)})
                 socket.send(message.SerializeToString())
-                input_message = socket.recv()
+                socket.recv()
 
         # for unit test; need to be compared with the client input (pitch_simulator)
         socket.send(b"Finish")

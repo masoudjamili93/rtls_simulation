@@ -1,9 +1,9 @@
 import json
-
 import matplotlib.pyplot as plt
 import zmq
 import rtls_pb2 as rt
 from matplotlib.animation import FuncAnimation
+
 
 class PitchSimulator:
 
@@ -14,7 +14,7 @@ class PitchSimulator:
     def __init__(self, game_time):
         self.__ani = None
         self.__game_time = game_time
-        self.__fig,self.__ax = plt.subplots()
+        self.__fig, self.__ax = plt.subplots()
         self.__context = zmq.Context()
         self.__socket = self.__context.socket(zmq.REP)
         self.__game_time = 100
@@ -29,17 +29,17 @@ class PitchSimulator:
     def simulate(self):
         # set the axes limits - Futsal pitch size
         self.__ax.axis([-self.PITCH_LENGTH/2, self.PITCH_LENGTH/2, -self.PITCH_WIDTH/2, self.PITCH_WIDTH/2])
-        for n in range (1,11):
-            color='green' if n<6 else 'blue'
-            newP, = self.__ax.plot(0,n,marker="o",color=color)
-            self.__points.append(newP)
-            self.__annotations.append(self.__ax.annotate(str(n), xy=(0,n)))
+        for n in range(1, 11):
+            color = 'green' if n < 6 else 'blue'
+            new_point, = self.__ax.plot(0, n, marker="o", color=color)
+            self.__points.append(new_point)
+            self.__annotations.append(self.__ax.annotate(str(n), xy=(0, n)))
         self.__ani = FuncAnimation(self.__fig, self.update_pitch, save_count=10)
         self.__fig.set_size_inches(10, 6)
         plt.show()
 
     # Updating players position from server on the pitch, to be repeatedly called by the animation
-    def update_pitch(self,t):
+    def update_pitch(self, time_step):
         message = self.__socket.recv()
         if message == b'Finish':
             self.__socket.close()
@@ -48,7 +48,7 @@ class PitchSimulator:
         position_message = rt.Position()
         position_message.ParseFromString(message)
         id = position_message.sensorId
-        if id<1 or id>10 :
+        if id < 1 or id > 10:
             return
         x = position_message.position.x
         y = position_message.position.y
@@ -57,7 +57,7 @@ class PitchSimulator:
         self.__annotations[id-1].set_position((x,y))
         self.__annotations[id-1].xy = (x, y)
         self.__position_history.append(
-            {"id": id, "usec": position_message.timestamp_usec, "x": round(x,4), "y": round(y,4), "z": round(z,4)})
+            {"id": id, "usec": position_message.timestamp_usec, "x": round(x, 4), "y": round(y, 4), "z": round(z, 4)})
         self.__socket.send(b"message received")
         return self.__points[id-1], self.__annotations[id-1]
 
