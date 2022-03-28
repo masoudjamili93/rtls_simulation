@@ -10,3 +10,5 @@ class TestCommunications(unittest.TestCase):
         pitch_data = json.load(fi)
         for i in range(0,len(rtls_data)):
             self.assertEqual(rtls_data[i], pitch_data[i], "rtls and pictch simulators contains different values")
+        fo.close()
+        fi.close()

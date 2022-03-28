@@ -44,7 +44,8 @@ class PitchSimulator:
         if message == b'Finish':
             self.__socket.close()
             self.__ani.event_source.stop()
-            return self.__points[0], self.__annotations[0]
+            self.write_input_history()
+            return
         position_message = rt.Position()
         position_message.ParseFromString(message)
         id = position_message.sensorId
